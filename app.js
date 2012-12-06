@@ -6,11 +6,15 @@
 var express = require('express')
 	, routes = require('./routes')
 	, user = require('./routes/user')()
-	, validate = require('./routes/validate')
+	, validate = require('./routes/validate')()
 	, http = require('http')
 	, path = require('path');
 
 var app = express();
+
+console.log('user lib:');
+console.log(user);
+
 
 app.configure(function(){
 	app.set('port', process.env.PORT || 3000);
@@ -31,15 +35,24 @@ app.configure('development', function(){
 	app.use(express.errorHandler());
 });
 
+/**
+ * Param pre-requisites
+ */
+app.param(':id', function(req,res,next,id){
+	// might consider getting the user or creating it here in the future
+	console.log('=======url: ' + req.originalUrl);
+	next();
+});
+
+/**
+ * API Route definitions
+ */
+app.post('/api/*', validate.isAuthorized); // all API requests require authorization
+app.post('/api/whosdrinkin', user.whosDrinkin);
+app.post('/api/user/touch/:id', user.touch);
+app.post('/api/user/update/:id', user.update);
+app.post('/api/push', user.push);
 app.get('/', routes.index);
-app.post('/users', validate.isAuthorized, user.getAll);
-app.post('/user/create', validate.isAuthorized, function(req,res,next){
-	user.create();
-});
-app.post('/user/update', validate.isAuthorized, function(req,res,next){
-	user.update();
-});
-app.post('notifications/send', validate.isAuthorized, user.sendNotification);
 
 http.createServer(app).listen(app.get('port'), function(){
 	console.log("Express server listening on port " + app.get('port'));

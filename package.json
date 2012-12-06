@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node app.js"
   },
-  "version": "0.0.1-4",
+  "version": "0.0.1-21",
   "engines": {
     "node": "0.8.x"
   },
@@ -18,6 +18,8 @@
     "jade": "*",
     "stylus": "0.31.x",
     "express": "3.0.0rc4",
-    "nano": "3.3.x"
+    "nano": "3.3.x",
+    "step": "0.0.5",
+    "apn": "1.2.4"
   }
 }
