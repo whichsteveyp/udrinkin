@@ -1,16 +1,23 @@
 {
   "name": "udrinkin",
   "subdomain": "udrinkin",
+  "domains": [
+    "udrink.in",
+    "www.udrink.in",
+    "udrinkin.com",
+    "www.udrinkin.com"
+  ],
   "scripts": {
-    "start": "app.js"
+    "start": "node app.js"
   },
-  "version": "0.0.1",
+  "version": "0.0.1-4",
   "engines": {
     "node": "0.8.x"
   },
   "dependencies": {
+    "jade": "*",
     "stylus": "0.31.x",
-    "express": ">= undefined",
+    "express": "3.0.0rc4",
     "nano": "3.3.x"
   }
 }

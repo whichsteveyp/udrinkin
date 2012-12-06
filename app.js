@@ -8,7 +8,30 @@ var express = require('express')
 	, user = require('./routes/user')
 	, http = require('http')
 	, path = require('path')
-	, nano = require('nano')('https://approxit:iv60Ldcfmm0L@approxit.cloudant.com');
+	, nano = require('nano')('https://'+process.env.dbUser+':'+process.env.dbPass+'@approxit.cloudant.com')
+	, udrinkinCouch;
+
+
+console.log(process.env);
+
+
+nano.db.get('udrinkin', function(err, body){
+		if(!err) {
+			console.log('connected');
+			udrinkinCouch = nano.db.use('udrinkin');
+		} else {
+			console.log('Could not find approxit DB, creating one...');
+			nano.db.create('udrinkin', function(err, body) {
+				// created approxit
+				if(!err) {
+					console.log('created');
+					udrinkinCouch = nano.db.use('udrinkin');
+				} else {
+					console.log('could not create');
+				}
+			});
+		}
+	});
 
 var app = express();
 
