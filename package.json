@@ -1,13 +1,16 @@
 {
-  "name": "application-name",
-  "version": "0.0.1",
-  "private": true,
+  "name": "udrinkin",
+  "subdomain": "udrinkin",
   "scripts": {
-    "start": "node app"
+    "start": "app.js"
+  },
+  "version": "0.0.1",
+  "engines": {
+    "node": "0.8.x"
   },
   "dependencies": {
-    "express": "3.0.0rc4",
-    "jade": "*",
-    "stylus": "*"
+    "stylus": "0.31.x",
+    "express": ">= undefined",
+    "nano": "3.3.x"
   }
 }
