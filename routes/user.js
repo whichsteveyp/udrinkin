@@ -3,7 +3,8 @@
  * GET users listing.
  */
 
- var Step = require('step');
+ var Step = require('step'),
+ 	apns = require('apn');
 
 var UsersModule = function(){
 	// nano db select
@@ -12,29 +13,79 @@ var UsersModule = function(){
 
 	nano.db.get('udrinkin', function(err, body){
 		if(!err) {
-			console.log('connected');
 			udrinkinCouch = nano.db.use('udrinkin');
 		} else {
-			console.log('Could not find approxit DB, creating one...');
 			nano.db.create('udrinkin', function(err, body) {
 				// created approxit
 				if(!err) {
-					console.log('created');
 					udrinkinCouch = nano.db.use('udrinkin');
-				} else {
-					console.log('could not create');
 				}
 			});
 		}
 	});
 
 	var _whosDrinkin = function(req, res) {
-		console.log('whos drinkin?');
-		res.json({ status: "success", data: { whosDrinkin: "errbody" }});
+		var rc = req.body,
+			drinkinFriends = [],
+			notDrinkinFriends = [],
+			friendsNotHavingAnyFunAtAll = [],
+			i, j;
+
+		udrinkinCouch.fetch({ "keys" : rc.keys }, function(err, body){
+			// loop through rows, place normal docs in drinking array
+			// place docs without "drinking" key in "not drinking"
+			// place error key docs in "invite" array
+
+			var rows = body.rows || [];
+
+			for(i=0, j = rows.length; i < j; i++) {
+				var newDoc = rows[i];
+
+				if(newDoc.error) {
+					friendsNotHavingAnyFunAtAll.push(newDoc);
+				} else if (newDoc.drinking) { // should be a hasProperty check and maybe a time check
+					drinkinFriends.push(newDoc);
+				} else {
+					notDrinkinFriends.push(newDoc);
+				}
+			}
+
+			res.json({ status: "success", data: {
+				drinking: drinkinFriends,
+				notDrinking: notDrinkinFriends,
+				invite: friendsNotHavingAnyFunAtAll
+				}
+			});
+		});
 	};
 
 	var _update = function(req, res) {
-		res.send("respond with an update");
+
+		var id = req.params.id,
+			rc = req.body,
+			updateDoc;
+
+		Step(
+			function updateUserDoc(){
+				udrinkinCouch.insert(rc.data, id);
+			},
+			function sendResults(err, doc){
+				var result = {
+					status: 'error',
+					message: 'unknown'
+				};
+
+				if(!err) {
+					result.data = doc;
+					result.status = 'success';
+					delete result.message;
+				} else {
+					result.message = err;
+				}
+
+				res.json({ status: "success", data: doc });
+			}
+		);
 	};
 
 	var _touch = function(req, res) {
@@ -47,29 +98,69 @@ var UsersModule = function(){
 				udrinkinCouch.get(id, {revs_info: true}, this);
 			},
 			function storeUser(err, doc){
-				console.log('user fetch by id is back: ');
-				console.dir(arguments);
-
 				if(!err) {
-					// delete doc revs info first?
 					userDoc = doc;
-					this(null, doc); // advance to next?
+					this(null, doc);
 				} else {
 					udrinkinCouch.insert({}, id, this);
 				}
 
 			},
 			function sendResults(err, doc){
-				console.log('send touch results');
-				console.dir(arguments);
+				var result = {
+					status: "error",
+					message: 'unknown'
+				};
+
+				if(!err) {
+					result.status = "success";
+					result.data = doc;
+					delete result.message;
+				} else {
+					result.message = err;
+				}
+
 				res.json({ status: "success", data: doc });
 			}
 		);
-		
 	};
 
 	var _push = function(req, res) {
-		res.send('response from push');
+		var rc = req.body;
+
+		var options = {
+			cert: 'cert.pem',
+			key: 'key.pem',
+			passphrase: null,
+			gateway: 'gateway.sandbox.push.apple.com',
+			port: 2195,
+			enhanced: true,
+			errorCallback: function(){
+				console.dir(arguments);
+			},
+			cacheLength: 10
+		};
+
+		var apnsConnection = new apns.Connection(options);
+
+		udrinkinCouch.fetch({ "keys" : rc.keys }, function(err, body){
+			// loop through all keys, if they have push note, send push note
+			console.log('pushes:');
+			console.log(body.rows);
+
+			var rows = body.rows || [];
+
+			for(i=0, j = rows.length; i < j; i++) {
+				var newDoc = rows[i],
+					myDevice;
+
+				if (newDoc.pushToken) {
+					myDevice = new apns.Device(token);
+				}
+			}
+
+		});
+
 	};
 
 	return {
