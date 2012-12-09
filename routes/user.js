@@ -16,7 +16,7 @@ var UsersModule = function(){
 			udrinkinCouch = nano.db.use('udrinkin');
 		} else {
 			nano.db.create('udrinkin', function(err, body) {
-				// created approxit
+				// created udrinkin
 				if(!err) {
 					udrinkinCouch = nano.db.use('udrinkin');
 				}
@@ -25,37 +25,21 @@ var UsersModule = function(){
 	});
 
 	var _whosDrinkin = function(req, res) {
-		var rc = req.body,
+		var rc = JSON.parse(req.body.data),
 			drinkinFriends = [],
 			notDrinkinFriends = [],
 			friendsNotHavingAnyFunAtAll = [],
 			i, j;
 
-		udrinkinCouch.fetch({ "keys" : rc.keys }, function(err, body){
-			// loop through rows, place normal docs in drinking array
-			// place docs without "drinking" key in "not drinking"
-			// place error key docs in "invite" array
-
-			var rows = body.rows || [];
-
-			for(i=0, j = rows.length; i < j; i++) {
-				var newDoc = rows[i];
-
-				if(newDoc.error) {
-					friendsNotHavingAnyFunAtAll.push(newDoc);
-				} else if (newDoc.drinking) { // should be a hasProperty check and maybe a time check
-					drinkinFriends.push(newDoc);
-				} else {
-					notDrinkinFriends.push(newDoc);
-				}
+		// error check this undefined flop
+		udrinkinCouch.fetch({ "keys" : rc.drinkers }, function(err, body){
+			if(!err) {
+				var rows = body.rows || [];
+				res.json({ status: "success", data: rows });
+			} else {
+				res.end('there was a couch error: ' + err);
 			}
 
-			res.json({ status: "success", data: {
-				drinking: drinkinFriends,
-				notDrinking: notDrinkinFriends,
-				invite: friendsNotHavingAnyFunAtAll
-				}
-			});
 		});
 	};
 
@@ -64,6 +48,8 @@ var UsersModule = function(){
 		var id = req.params.id,
 			rc = req.body,
 			updateDoc;
+
+		rc.data._id = id;
 
 		Step(
 			function updateUserDoc(){
@@ -160,11 +146,10 @@ var UsersModule = function(){
 			}
 
 		});
-
 	};
 
 	return {
-		whosDrinkin: _whosDrinkin,
+		whosdrinkin: _whosDrinkin,
 		touch: _touch,
 		update: _update,
 		push: _push

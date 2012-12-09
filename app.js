@@ -35,7 +35,6 @@ app.configure('development', function(){
  */
 app.param(':id', function(req,res,next,id){
 	// might consider getting the user or creating it here in the future
-	console.log('=======url: ' + req.originalUrl);
 	next();
 });
 
@@ -43,7 +42,7 @@ app.param(':id', function(req,res,next,id){
  * API Route definitions
  */
 app.post('/api/*', validate.isAuthorized); // all API requests require authorization
-app.post('/api/whosdrinkin', user.whosDrinkin);
+app.post('/api/whosdrinkin', user.whosdrinkin);
 app.post('/api/user/touch/:id', user.touch);
 app.post('/api/user/update/:id', user.update);
 app.post('/api/push', user.push);
